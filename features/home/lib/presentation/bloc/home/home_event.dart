@@ -1,0 +1,24 @@
+import 'package:equatable/equatable.dart';
+
+abstract class HomeEvent extends Equatable {
+  const HomeEvent();
+
+  @override
+  List<Object> get props => [];
+}
+
+class GetIdCity extends HomeEvent {
+  final String city;
+
+  const GetIdCity(this.city);
+
+  @override
+  List<Object> get props => [city];
+}
+
+class StartSalatTracking extends HomeEvent {}
+
+class UpdateSalatWaktuAktif extends HomeEvent {
+  final String waktuAktif;
+  UpdateSalatWaktuAktif(this.waktuAktif);
+}
