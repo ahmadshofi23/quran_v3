@@ -1,14 +1,20 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shimmer/shimmer.dart';
+
+// Feature imports
 import 'package:asmaulhusna/presentation/ui/asmaulhusna_page.dart';
 import 'package:doa/presentation/ui/doa_pages.dart';
-import 'package:flutter/material.dart';
+import 'package:surah/presentation/ui/surah_page.dart';
+import 'package:home/presentation/widget/tab_selector.dart';
+import 'package:home/utils/clean_name.dart';
+
+// Bloc imports
 import 'package:home/presentation/bloc/home/home_bloc.dart';
 import 'package:home/presentation/bloc/home/home_event.dart';
 import 'package:home/presentation/bloc/home/home_state.dart';
 import 'package:home/presentation/bloc/location/location_bloc.dart';
 import 'package:home/presentation/bloc/location/location_state.dart';
-import 'package:home/utils/clean_name.dart';
-import 'package:surah/presentation/ui/surah_page.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomePages extends StatefulWidget {
   const HomePages({Key? key}) : super(key: key);
@@ -24,14 +30,11 @@ class _HomePagesState extends State<HomePages>
 
   @override
   void initState() {
+    super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
-      setState(() {
-        _selectedIndex = _tabController.index;
-      });
+      setState(() => _selectedIndex = _tabController.index);
     });
-
-    super.initState();
   }
 
   @override
@@ -42,8 +45,8 @@ class _HomePagesState extends State<HomePages>
 
   @override
   Widget build(BuildContext context) {
-    var height = MediaQuery.of(context).size.height;
-    var width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery.of(context).size.width;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -53,7 +56,9 @@ class _HomePagesState extends State<HomePages>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
+              /// ===============================
+              /// HEADER SECTION
+              /// ===============================
               Row(
                 children: [
                   Expanded(
@@ -72,112 +77,55 @@ class _HomePagesState extends State<HomePages>
                           'Baca Al-Quran Dengan Mudah',
                           style: TextStyle(fontSize: 15, color: Colors.black),
                         ),
+                        const SizedBox(height: 8),
 
-                        const Text(
-                          '19:21',
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Text(
-                          'Ramadan 23, 1444 AH',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xff232323),
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        BlocBuilder<LocationBloc, LocationState>(
+                        /// Jam dan informasi waktu salat
+                        BlocBuilder<HomeBloc, HomeState>(
                           builder: (context, state) {
-                            if (state.loading) {
-                              return const Text('Mendeteksi lokasi...');
-                            } else if (state.error != null) {
-                              return Text('Error: ${state.error}');
-                            } else {
-                              final cityName = cleanCityName(
-                                '${state.city?.toUpperCase()}',
-                              );
+                            final now = state.currentTime ?? DateTime.now();
+                            final jam = now.hour.toString().padLeft(2, '0');
+                            final menit = now.minute.toString().padLeft(2, '0');
 
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Lokasi: ${state.city}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black87,
-                                    ),
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '$jam:$menit',
+                                  style: const TextStyle(
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  SizedBox(height: 5),
-                                  BlocConsumer<HomeBloc, HomeState>(
-                                    listener:
-                                        (context, state) =>
-                                            context.read<HomeBloc>()
-                                              ..add(GetIdCity(cityName)),
-                                    builder: (context, state) {
-                                      if (state.loading) {
-                                        return const Center(
-                                          child: CircularProgressIndicator(),
-                                        );
-                                      } else if (state.error != null) {
-                                        return Text('Error: ${state.error}');
-                                      }
-                                      return Container(
-                                        decoration: BoxDecoration(
-                                          color: Color(
-                                            0xff763FBC,
-                                          ).withOpacity(0.9),
-                                          borderRadius: BorderRadius.circular(
-                                            5,
-                                          ),
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Column(
-                                            children: [
-                                              _buildSalatRow(
-                                                'Imsak',
-                                                '${state.jadwalHarian?.imsak}',
-                                              ),
-                                              _buildSalatRow(
-                                                'Subuh',
-                                                '${state.jadwalHarian?.subuh}',
-                                              ),
-                                              _buildSalatRow(
-                                                'Dhuha',
-                                                '${state.jadwalHarian?.dhuha}',
-                                              ),
-                                              _buildSalatRow(
-                                                'Dzuhur',
-                                                '${state.jadwalHarian?.dzuhur}',
-                                              ),
-                                              _buildSalatRow(
-                                                'Ashar',
-                                                '${state.jadwalHarian?.ashar}',
-                                              ),
-                                              _buildSalatRow(
-                                                'Magrib',
-                                                '${state.jadwalHarian?.maghrib}',
-                                              ),
-                                              _buildSalatRow(
-                                                'Isya',
-                                                '${state.jadwalHarian?.isya}',
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    listenWhen:
-                                        (previous, current) =>
-                                            previous.city != current.city,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Waktu aktif: ${state.waktuAktif ?? '-'}',
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Berikutnya: ${state.waktuSalatBerikutnya ?? '-'}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black54,
                                   ),
-                                ],
-                              );
-                            }
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Menuju ${state.waktuSalatBerikutnya ?? '-'}: ${state.countdown ?? '--:--:--'}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.deepPurple,
+                                  ),
+                                ),
+                              ],
+                            );
                           },
                         ),
+
+                        const SizedBox(height: 10),
+
+                        /// Lokasi & jadwal salat
+                        _buildLocationAndPrayerCard(),
                       ],
                     ),
                   ),
@@ -185,9 +133,11 @@ class _HomePagesState extends State<HomePages>
                 ],
               ),
 
-              // ... (bagian atas tetap sama)
-              SizedBox(height: height * 0.01),
+              SizedBox(height: height * 0.02),
 
+              /// ===============================
+              /// KATEGORI SECTION
+              /// ===============================
               const Text(
                 'Kategori',
                 style: TextStyle(
@@ -198,109 +148,15 @@ class _HomePagesState extends State<HomePages>
               ),
               SizedBox(height: height * 0.02),
 
-              Row(
-                children: [
-                  Container(
-                    width: width * 0.2,
-                    decoration: BoxDecoration(
-                      color:
-                          _selectedIndex == 0
-                              ? const Color(0xff9543FF)
-                              : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color:
-                            _selectedIndex == 0
-                                ? Colors.transparent
-                                : Colors.black,
-                      ),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      child: Center(
-                        child: Text(
-                          'SURAT',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color:
-                                _selectedIndex == 0
-                                    ? Colors.white
-                                    : Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(width: width * 0.05),
-                  Container(
-                    width: width * 0.2,
-                    decoration: BoxDecoration(
-                      color:
-                          _selectedIndex == 1
-                              ? const Color(0xff9543FF)
-                              : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color:
-                            _selectedIndex == 1
-                                ? Colors.transparent
-                                : Colors.black,
-                      ),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      child: Center(
-                        child: Text(
-                          'DOA',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color:
-                                _selectedIndex == 1
-                                    ? Colors.white
-                                    : Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(width: width * 0.05),
-                  Container(
-                    // width: width * 0.2,
-                    decoration: BoxDecoration(
-                      color:
-                          _selectedIndex == 2
-                              ? const Color(0xff9543FF)
-                              : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color:
-                            _selectedIndex == 2
-                                ? Colors.transparent
-                                : Colors.black,
-                      ),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(8),
-                      child: Center(
-                        child: Text(
-                          'Asmaul Husna',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color:
-                                _selectedIndex == 2
-                                    ? Colors.white
-                                    : Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              TabSelector(
+                selectedIndex: _selectedIndex,
+                width: width,
+                onTap: (index) {
+                  setState(() {
+                    _selectedIndex = index;
+                    _tabController.animateTo(index);
+                  });
+                },
               ),
 
               SizedBox(height: height * 0.02),
@@ -308,7 +164,7 @@ class _HomePagesState extends State<HomePages>
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
-                  children: [SurahPage(), DoaPage(), AsmaulhusnaPage()],
+                  children: const [SurahPage(), DoaPage(), AsmaulhusnaPage()],
                 ),
               ),
             ],
@@ -317,25 +173,229 @@ class _HomePagesState extends State<HomePages>
       ),
     );
   }
+
+  /// ===============================
+  /// LOKASI & JADWAL SALAT WIDGET
+  /// ===============================
+  Widget _buildLocationAndPrayerCard() {
+    return BlocListener<LocationBloc, LocationState>(
+      listenWhen: (previous, current) => previous.city != current.city,
+      listener: (context, state) {
+        if (state.city != null) {
+          final cityName = cleanCityName(state.city!.toUpperCase());
+          context.read<HomeBloc>().add(GetIdCity(cityName));
+        }
+      },
+      child: BlocBuilder<LocationBloc, LocationState>(
+        builder: (context, locationState) {
+          if (locationState.loading) {
+            return const Text('Mendeteksi lokasi...');
+          } else if (locationState.error != null) {
+            return Text('Error: ${locationState.error}');
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Lokasi: ${locationState.city}',
+                style: const TextStyle(fontSize: 12, color: Colors.black87),
+              ),
+              const SizedBox(height: 5),
+
+              BlocBuilder<HomeBloc, HomeState>(
+                builder: (context, homeState) {
+                  if (homeState.loading) {
+                    return _buildShimmerLoading();
+                  } else if (homeState.error != null) {
+                    return _buildErrorState(homeState);
+                  } else if (homeState.jadwalHarian == null) {
+                    return const Text('Belum ada jadwal salat');
+                  }
+
+                  return _buildPrayerScheduleCard(homeState);
+                },
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// ===============================
+  /// CARD JADWAL SALAT DENGAN ANIMASI
+  /// ===============================
+  Widget _buildPrayerScheduleCard(HomeState homeState) {
+    final activeColor = _getColorForWaktu(homeState.waktuAktif);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeInOut,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [activeColor.withOpacity(0.9), Colors.deepPurple.shade700],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: activeColor.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        children: [
+          _buildSalatRow(
+            'Imsak',
+            homeState.jadwalHarian?.imsak,
+            active: homeState.waktuAktif == 'Imsak',
+          ),
+          _buildSalatRow(
+            'Subuh',
+            homeState.jadwalHarian?.subuh,
+            active: homeState.waktuAktif == 'Subuh',
+          ),
+          _buildSalatRow(
+            'Dhuha',
+            homeState.jadwalHarian?.dhuha,
+            active: homeState.waktuAktif == 'Dhuha',
+          ),
+          _buildSalatRow(
+            'Dzuhur',
+            homeState.jadwalHarian?.dzuhur,
+            active: homeState.waktuAktif == 'Dzuhur',
+          ),
+          _buildSalatRow(
+            'Ashar',
+            homeState.jadwalHarian?.ashar,
+            active: homeState.waktuAktif == 'Ashar',
+          ),
+          _buildSalatRow(
+            'Maghrib',
+            homeState.jadwalHarian?.maghrib,
+            active: homeState.waktuAktif == 'Maghrib',
+          ),
+          _buildSalatRow(
+            'Isya',
+            homeState.jadwalHarian?.isya,
+            active: homeState.waktuAktif == 'Isya',
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ===============================
+  /// WARNA DINAMIS BERDASARKAN WAKTU SALAT
+  /// ===============================
+  Color _getColorForWaktu(String? waktu) {
+    switch (waktu) {
+      case 'Subuh':
+        return Colors.blue.shade600;
+      case 'Dzuhur':
+        return Colors.orange.shade600;
+      case 'Ashar':
+        return Colors.teal.shade600;
+      case 'Maghrib':
+        return Colors.red.shade600;
+      case 'Isya':
+        return Colors.indigo.shade700;
+      case 'Dhuha':
+        return Colors.amber.shade700;
+      default:
+        return const Color(0xff763FBC);
+    }
+  }
+
+  /// ===============================
+  /// SHIMMER LOADING
+  /// ===============================
+  Widget _buildShimmerLoading() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade300,
+      highlightColor: Colors.grey.shade100,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: List.generate(7, (index) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(width: 80, height: 14, color: Colors.white),
+                  Container(width: 60, height: 14, color: Colors.white),
+                ],
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  /// ===============================
+  /// ERROR STATE
+  /// ===============================
+  Widget _buildErrorState(HomeState homeState) {
+    return Center(
+      child: Column(
+        children: [
+          const Icon(Icons.error, color: Colors.red),
+          const SizedBox(height: 8),
+          Text('Error: ${homeState.error}'),
+          TextButton(
+            onPressed: () {
+              if (homeState.city != null) {
+                context.read<HomeBloc>().add(GetIdCity(homeState.city!));
+              }
+            },
+            child: const Text("Coba Lagi"),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-Widget _buildSalatRow(String label, String? time) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4.0),
+/// ===============================
+/// ROW WAKTU SALAT DENGAN EFEK AKTIF
+/// ===============================
+Widget _buildSalatRow(String label, String? time, {bool active = false}) {
+  return AnimatedContainer(
+    duration: const Duration(milliseconds: 400),
+    padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4),
+    decoration: BoxDecoration(
+      color: active ? Colors.white.withOpacity(0.15) : Colors.transparent,
+      borderRadius: BorderRadius.circular(6),
+    ),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontWeight: active ? FontWeight.bold : FontWeight.w600,
             color: Colors.white,
           ),
         ),
         Text(
           time ?? '-',
-          style: const TextStyle(fontSize: 14, color: Colors.white),
+          style: TextStyle(
+            fontSize: 14,
+            color: active ? Colors.yellowAccent : Colors.white,
+            fontWeight: active ? FontWeight.bold : FontWeight.normal,
+          ),
         ),
       ],
     ),

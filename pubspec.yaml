@@ -28,28 +28,23 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  asmaulhusna:
+    path: features/asmaulhusna
   cupertino_icons: ^1.0.8
   dependencies:
     path: libraries/dependencies
+  doa:
+    path: features/doa
   flutter:
     sdk: flutter
+  home:
+    path: features/home
   shared:
     path: libraries/shared
   surah:
     path: features/surah
-  home:
-    path: features/home
-  doa:
-    path: features/doa
-  asmaulhusna:
-    path: features/asmaulhusna
 
 dev_dependencies:
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^5.0.0
   flutter_test:
     sdk: flutter

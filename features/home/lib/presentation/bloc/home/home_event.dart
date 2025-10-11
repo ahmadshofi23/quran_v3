@@ -18,7 +18,4 @@ class GetIdCity extends HomeEvent {
 
 class StartSalatTracking extends HomeEvent {}
 
-class UpdateSalatWaktuAktif extends HomeEvent {
-  final String waktuAktif;
-  UpdateSalatWaktuAktif(this.waktuAktif);
-}
+class UpdateCurrentTime extends HomeEvent {}
