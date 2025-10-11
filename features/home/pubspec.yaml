@@ -17,6 +17,8 @@ dependencies:
     path: ../doa
   asmaulhusna:
     path: ../asmaulhusna
+  hadist:
+    path: ../hadist
   dependencies:
     path: ../../libraries/dependencies
   shared:

@@ -243,6 +243,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
             sound: RawResourceAndroidNotificationSound(soundFile),
           ),
         ),
+        // ignore: deprecated_member_use
         androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,

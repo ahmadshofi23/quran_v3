@@ -39,6 +39,13 @@ class TabSelector extends StatelessWidget {
           isSelected: selectedIndex == 2,
           onTap: onTap,
         ),
+        SizedBox(width: width * 0.05),
+        TabItem(
+          label: 'Hadist',
+          index: 3,
+          isSelected: selectedIndex == 3,
+          onTap: onTap,
+        ),
       ],
     );
   }

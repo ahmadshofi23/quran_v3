@@ -9,6 +9,11 @@ import 'package:doa/domain/repositories_impl/doa_repository_impl.dart';
 import 'package:doa/domain/usecase/doa_usecase.dart';
 import 'package:doa/presentation/bloc/bloc/doa_bloc.dart';
 import 'package:flutter_modular/flutter_modular.dart';
+import 'package:hadist/data/remote/remote_hadist_data_sources.dart';
+import 'package:hadist/data/repositories/hadist_repository.dart';
+import 'package:hadist/domain/repositories_impl/hadist_repository_impl.dart';
+import 'package:hadist/domain/usecase/hadist_usecase.dart';
+import 'package:hadist/presentation/bloc/bloc/hadist_bloc.dart';
 import 'package:home/data/remote/home_remote_data_sources.dart';
 import 'package:home/data/repositories/home_repositories_impl.dart';
 import 'package:home/domain/repository/home_repository.dart';
@@ -42,6 +47,7 @@ class FeatureHomeModule extends Module {
     Bind((_) => RemoteQuranDataSourceImpl()),
     Bind((_) => RemoteDoaDataSourcesImpl()),
     Bind((_) => RemoteAsmaulHusnaDataSourcesImpl()),
+    Bind((_) => RemoteHadistDataSourcesImpl()),
 
     // Repository
     Bind(
@@ -65,6 +71,11 @@ class FeatureHomeModule extends Module {
             Modular.get<RemoteAsmaulHusnaDataSources>(),
       ),
     ),
+    Bind(
+      (_) => HadistRepositoryImpl(
+        remoteHadistDataSources: Modular.get<RemoteHadistDataSources>(),
+      ),
+    ),
 
     // Usecases
     Bind((_) => HomeUsecaseImpl(repository: Modular.get<HomeRepository>())),
@@ -76,6 +87,11 @@ class FeatureHomeModule extends Module {
       (_) => AsmaulHusnaUsecaseImpl(
         asmaulhusnaRepository: Modular.get<AsmaulhusnaRepository>(),
       ),
+    ),
+
+    Bind(
+      (_) =>
+          HadistUsecaseImpl(hadistRepository: Modular.get<HadistRepository>()),
     ),
   ];
 
@@ -109,6 +125,9 @@ class FeatureHomeModule extends Module {
                     (_) => AsmaulHusnaBloc(
                       usecase: Modular.get<AsmaulHusnaUsecase>(),
                     ),
+              ),
+              BlocProvider(
+                create: (_) => HadistBloc(Modular.get<HadistUsecase>()),
               ),
             ],
             child: HomePages(),

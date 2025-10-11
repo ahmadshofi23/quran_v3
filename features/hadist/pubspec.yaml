@@ -1,3 +1,4 @@
+publish_to: none
 name: hadist
 description: "A new Flutter package project."
 version: 0.0.1
@@ -10,6 +11,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  dependencies:
+    path: ../../libraries/dependencies
+  shared:
+    path: ../../libraries/shared
 
 dev_dependencies:
   flutter_test:

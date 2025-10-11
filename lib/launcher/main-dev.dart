@@ -1,7 +1,11 @@
+// ignore: file_names
 import 'package:flutter/material.dart';
+// ignore: depend_on_referenced_packages
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:quran_v3/app/quran_app.dart';
+// ignore: depend_on_referenced_packages
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+// ignore: depend_on_referenced_packages
 import 'package:timezone/data/latest.dart' as tz;
 import 'dart:io' show Platform;
 

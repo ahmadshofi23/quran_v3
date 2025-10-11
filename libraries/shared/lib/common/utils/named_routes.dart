@@ -6,4 +6,6 @@ class NamedRoutes {
   String doa = '/doa';
   String detailDoa = '/detailDoa';
   String asmaulHusna = '/asmaulHusna';
+  String hadist = '/hadist';
+  String detailHadist = '/detailHadist';
 }

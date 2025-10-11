@@ -8,6 +8,7 @@ import 'package:shared/common/utils/named_routes.dart';
 import 'package:shared/shared.dart';
 import 'package:surah/surah.dart';
 import 'package:doa/doa.dart';
+import 'package:hadist/hadist.dart';
 
 class AppModule extends Module {
   @override
@@ -51,6 +52,10 @@ class AppModule extends Module {
     ModuleRoute(
       Modular.get<NamedRoutes>().asmaulHusna,
       module: FeatureAsmaulHusnaModule(),
+    ),
+    ModuleRoute(
+      Modular.get<NamedRoutes>().hadist,
+      module: FeatureHadistModule(),
     ),
   ];
 }

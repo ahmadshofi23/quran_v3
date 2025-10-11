@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hadist/presentation/ui/hadist_page.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -36,7 +37,7 @@ class _HomePagesState extends State<HomePages>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _initializeNotification();
     _tabController.addListener(() {
       setState(() => _selectedIndex = _tabController.index);
@@ -255,7 +256,12 @@ class _HomePagesState extends State<HomePages>
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
-                    children: const [SurahPage(), DoaPage(), AsmaulhusnaPage()],
+                    children: const [
+                      SurahPage(),
+                      DoaPage(),
+                      AsmaulhusnaPage(),
+                      HadistPage(),
+                    ],
                   ),
                 ),
               ],
