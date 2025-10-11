@@ -10,6 +10,7 @@ class HomeState extends Equatable {
   final String? waktuAktif;
   final String? waktuSalatBerikutnya;
   final String? countdown;
+  final String? showAzanDialog;
 
   const HomeState({
     this.city,
@@ -20,6 +21,7 @@ class HomeState extends Equatable {
     this.waktuAktif,
     this.waktuSalatBerikutnya,
     this.countdown,
+    this.showAzanDialog,
   });
 
   HomeState copyWith({
@@ -31,6 +33,7 @@ class HomeState extends Equatable {
     String? waktuAktif,
     String? waktuSalatBerikutnya,
     String? countdown,
+    String? showAzanDialog,
   }) {
     return HomeState(
       city: city ?? this.city,
@@ -41,6 +44,7 @@ class HomeState extends Equatable {
       waktuAktif: waktuAktif ?? this.waktuAktif,
       waktuSalatBerikutnya: waktuSalatBerikutnya ?? this.waktuSalatBerikutnya,
       countdown: countdown ?? this.countdown,
+      showAzanDialog: showAzanDialog ?? this.showAzanDialog,
     );
   }
 
@@ -54,5 +58,6 @@ class HomeState extends Equatable {
     waktuAktif,
     waktuSalatBerikutnya,
     countdown,
+    showAzanDialog,
   ];
 }

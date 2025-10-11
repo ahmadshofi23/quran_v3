@@ -23,11 +23,10 @@ import 'package:surah/data/remote/remote_quran.dart';
 import 'package:surah/data/repositories/quran_repository_impl.dart';
 import 'package:surah/domain/repositories/quran_repository.dart';
 import 'package:surah/domain/usecase/quran_usecase.dart';
-// ignore: depend_on_referenced_packages
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:surah/presentation/bloc/bloc/quran_bloc.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-// Make sure the import path above is correct and points to the file where LocationService is defined.
 class FeatureHomeModule extends Module {
   FeatureHomeModule();
 
@@ -35,16 +34,16 @@ class FeatureHomeModule extends Module {
 
   @override
   List<Bind> get binds => [
-    Bind((_) => HomeRemoteDataSourcesImpl()),
-    Bind(
-      (_) => RemoteQuranDataSourceImpl(
-        // dio: Modular.get<Dio>(),
-      ),
-    ),
-    Bind((_) => RemoteDoaDataSourcesImpl()),
+    // 🔔 Notifikasi Plugin (singleton)
+    Bind.singleton((_) => FlutterLocalNotificationsPlugin()),
 
+    // Data sources
+    Bind((_) => HomeRemoteDataSourcesImpl()),
+    Bind((_) => RemoteQuranDataSourceImpl()),
+    Bind((_) => RemoteDoaDataSourcesImpl()),
     Bind((_) => RemoteAsmaulHusnaDataSourcesImpl()),
 
+    // Repository
     Bind(
       (_) => HomeRepositoriesImpl(
         remoteDataSources: Modular.get<HomeRemoteDataSources>(),
@@ -67,13 +66,12 @@ class FeatureHomeModule extends Module {
       ),
     ),
 
+    // Usecases
     Bind((_) => HomeUsecaseImpl(repository: Modular.get<HomeRepository>())),
     Bind(
       (_) => QuranUseCaseImpl(quranRepository: Modular.get<QuranRepository>()),
     ),
-
     Bind((_) => DoaUsecaseImpl(doaRepository: Modular.get<DoaRepository>())),
-
     Bind(
       (_) => AsmaulHusnaUsecaseImpl(
         asmaulhusnaRepository: Modular.get<AsmaulhusnaRepository>(),
@@ -83,33 +81,32 @@ class FeatureHomeModule extends Module {
 
   @override
   List<ModularRoute> get routes => [
-    ChildRoute(Modular.initialRoute, child: (context, args) => SplashPages()),
-
+    ChildRoute(Modular.initialRoute, child: (_, __) => SplashPages()),
     ChildRoute(
       _namedRoutes.home,
       child:
-          (context, args) => MultiBlocProvider(
+          (_, __) => MultiBlocProvider(
             providers: [
               BlocProvider(
-                create:
-                    (context) =>
-                        QuranBloc(useCase: Modular.get<QuranUseCase>()),
+                create: (_) => QuranBloc(useCase: Modular.get<QuranUseCase>()),
               ),
               BlocProvider(
                 create: (_) => LocationBloc()..add(StartLocationTracking()),
               ),
               BlocProvider(
                 create:
-                    (context) =>
-                        HomeBloc(homeUsecase: Modular.get<HomeUsecase>()),
+                    (_) => HomeBloc(
+                      homeUsecase: Modular.get<HomeUsecase>(),
+                      notificationsPlugin:
+                          Modular.get<FlutterLocalNotificationsPlugin>(),
+                    ),
+              ),
+              BlocProvider(
+                create: (_) => DoaBloc(usecase: Modular.get<DoaUsecase>()),
               ),
               BlocProvider(
                 create:
-                    (context) => DoaBloc(usecase: Modular.get<DoaUsecase>()),
-              ),
-              BlocProvider(
-                create:
-                    (context) => AsmaulHusnaBloc(
+                    (_) => AsmaulHusnaBloc(
                       usecase: Modular.get<AsmaulHusnaUsecase>(),
                     ),
               ),

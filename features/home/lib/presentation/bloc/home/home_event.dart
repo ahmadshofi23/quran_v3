@@ -19,3 +19,11 @@ class GetIdCity extends HomeEvent {
 class StartSalatTracking extends HomeEvent {}
 
 class UpdateCurrentTime extends HomeEvent {}
+
+class ShowAzanDialog extends HomeEvent {
+  final String prayerName;
+  const ShowAzanDialog(this.prayerName);
+
+  @override
+  List<Object> get props => [prayerName];
+}

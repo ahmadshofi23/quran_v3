@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 // Feature imports
 import 'package:asmaulhusna/presentation/ui/asmaulhusna_page.dart';
@@ -16,6 +17,9 @@ import 'package:home/presentation/bloc/home/home_state.dart';
 import 'package:home/presentation/bloc/location/location_bloc.dart';
 import 'package:home/presentation/bloc/location/location_state.dart';
 
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
 class HomePages extends StatefulWidget {
   const HomePages({Key? key}) : super(key: key);
 
@@ -27,14 +31,91 @@ class _HomePagesState extends State<HomePages>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _selectedIndex = 0;
+  String? _lastAzanNotified;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _initializeNotification();
     _tabController.addListener(() {
       setState(() => _selectedIndex = _tabController.index);
     });
+  }
+
+  Future<void> _initializeNotification() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  Future<void> _showNotificationAzan(String prayerName) async {
+    // Pilih suara sesuai nama salat
+    final String soundName =
+        prayerName.toLowerCase() == 'subuh'
+            ? 'azan_subuh' // file: assets/sounds/azan_subuh.mp3
+            : 'azan_normal'; // file: assets/sounds/azan.mp3
+
+    final AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+          'azan_channel_id',
+          'Azan Notifications',
+          channelDescription: 'Pemberitahuan waktu salat harian',
+          importance: Importance.max,
+          priority: Priority.high,
+          playSound: true,
+          sound: RawResourceAndroidNotificationSound(soundName),
+          enableVibration: true,
+          visibility: NotificationVisibility.public,
+          styleInformation: const DefaultStyleInformation(true, true),
+          category:
+              AndroidNotificationCategory
+                  .alarm, // agar bisa menembus Do Not Disturb
+        );
+
+    final NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+    );
+
+    // Gunakan ID unik untuk tiap notifikasi supaya tidak tumpang tindih
+    final int notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+    await flutterLocalNotificationsPlugin.show(
+      notificationId,
+      'Waktu $prayerName Telah Tiba',
+      'Sudah masuk waktu salat $prayerName, yuk segera salat 🙏',
+      platformChannelSpecifics,
+    );
+  }
+
+  void _showAzanDialog(BuildContext context, String prayerName) {
+    showDialog(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            backgroundColor: Colors.deepPurple[50],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: Text(
+              'Waktu $prayerName Telah Tiba',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              'Sudah masuk waktu salat, yuk segera salat dulu 🙏',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+    );
   }
 
   @override
@@ -50,133 +131,141 @@ class _HomePagesState extends State<HomePages>
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: width * 0.05),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// ===============================
-              /// HEADER SECTION
-              /// ===============================
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'My Quran',
-                          style: TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xff9543FF),
+      body: BlocListener<HomeBloc, HomeState>(
+        listenWhen:
+            (previous, current) => previous.waktuAktif != current.waktuAktif,
+        listener: (context, state) {
+          if (state.waktuAktif != null &&
+              state.waktuAktif != _lastAzanNotified) {
+            _lastAzanNotified = state.waktuAktif;
+            _showAzanDialog(context, state.waktuAktif!);
+            _showNotificationAzan(state.waktuAktif!);
+          }
+        },
+        child: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: width * 0.05),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // HEADER
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'My Quran',
+                            style: TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xff9543FF),
+                            ),
                           ),
-                        ),
-                        const Text(
-                          'Baca Al-Quran Dengan Mudah',
-                          style: TextStyle(fontSize: 15, color: Colors.black),
-                        ),
-                        const SizedBox(height: 8),
+                          const Text(
+                            'Baca Al-Quran Dengan Mudah',
+                            style: TextStyle(fontSize: 15, color: Colors.black),
+                          ),
+                          const SizedBox(height: 8),
 
-                        /// Jam dan informasi waktu salat
-                        BlocBuilder<HomeBloc, HomeState>(
-                          builder: (context, state) {
-                            final now = state.currentTime ?? DateTime.now();
-                            final jam = now.hour.toString().padLeft(2, '0');
-                            final menit = now.minute.toString().padLeft(2, '0');
+                          // JAM DAN INFO SALAT
+                          BlocBuilder<HomeBloc, HomeState>(
+                            builder: (context, state) {
+                              final now = state.currentTime ?? DateTime.now();
+                              final jam = now.hour.toString().padLeft(2, '0');
+                              final menit = now.minute.toString().padLeft(
+                                2,
+                                '0',
+                              );
 
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '$jam:$menit',
-                                  style: const TextStyle(
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.bold,
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '$jam:$menit',
+                                    style: const TextStyle(
+                                      fontSize: 36,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Waktu aktif: ${state.waktuAktif ?? '-'}',
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Berikutnya: ${state.waktuSalatBerikutnya ?? '-'}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.black54,
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Waktu aktif: ${state.waktuAktif ?? '-'}',
+                                    style: const TextStyle(fontSize: 16),
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Menuju ${state.waktuSalatBerikutnya ?? '-'}: ${state.countdown ?? '--:--:--'}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.deepPurple,
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Berikutnya: ${state.waktuSalatBerikutnya ?? '-'}',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black54,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Menuju ${state.waktuSalatBerikutnya ?? '-'}: ${state.countdown ?? '--:--:--'}',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.deepPurple,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
 
-                        const SizedBox(height: 10),
+                          const SizedBox(height: 10),
+                          _buildLocationAndPrayerCard(),
 
-                        /// Lokasi & jadwal salat
-                        _buildLocationAndPrayerCard(),
-                      ],
+                          // 🔔 Tombol Tes Azan
+                        ],
+                      ),
                     ),
+                    Expanded(child: Image.asset('assets/quran4.png')),
+                  ],
+                ),
+
+                SizedBox(height: height * 0.02),
+
+                // TAB SELECTOR
+                const Text(
+                  'Kategori',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
-                  Expanded(child: Image.asset('assets/quran4.png')),
-                ],
-              ),
-
-              SizedBox(height: height * 0.02),
-
-              /// ===============================
-              /// KATEGORI SECTION
-              /// ===============================
-              const Text(
-                'Kategori',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
                 ),
-              ),
-              SizedBox(height: height * 0.02),
+                SizedBox(height: height * 0.02),
 
-              TabSelector(
-                selectedIndex: _selectedIndex,
-                width: width,
-                onTap: (index) {
-                  setState(() {
-                    _selectedIndex = index;
-                    _tabController.animateTo(index);
-                  });
-                },
-              ),
-
-              SizedBox(height: height * 0.02),
-
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: const [SurahPage(), DoaPage(), AsmaulhusnaPage()],
+                TabSelector(
+                  selectedIndex: _selectedIndex,
+                  width: width,
+                  onTap: (index) {
+                    setState(() {
+                      _selectedIndex = index;
+                      _tabController.animateTo(index);
+                    });
+                  },
                 ),
-              ),
-            ],
+
+                SizedBox(height: height * 0.02),
+
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: const [SurahPage(), DoaPage(), AsmaulhusnaPage()],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  /// ===============================
-  /// LOKASI & JADWAL SALAT WIDGET
-  /// ===============================
   Widget _buildLocationAndPrayerCard() {
     return BlocListener<LocationBloc, LocationState>(
       listenWhen: (previous, current) => previous.city != current.city,
@@ -202,7 +291,6 @@ class _HomePagesState extends State<HomePages>
                 style: const TextStyle(fontSize: 12, color: Colors.black87),
               ),
               const SizedBox(height: 5),
-
               BlocBuilder<HomeBloc, HomeState>(
                 builder: (context, homeState) {
                   if (homeState.loading) {
@@ -223,15 +311,11 @@ class _HomePagesState extends State<HomePages>
     );
   }
 
-  /// ===============================
-  /// CARD JADWAL SALAT DENGAN ANIMASI
-  /// ===============================
   Widget _buildPrayerScheduleCard(HomeState homeState) {
     final activeColor = _getColorForWaktu(homeState.waktuAktif);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 600),
-      curve: Curves.easeInOut,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [activeColor.withOpacity(0.9), Colors.deepPurple.shade700],
@@ -290,9 +374,6 @@ class _HomePagesState extends State<HomePages>
     );
   }
 
-  /// ===============================
-  /// WARNA DINAMIS BERDASARKAN WAKTU SALAT
-  /// ===============================
   Color _getColorForWaktu(String? waktu) {
     switch (waktu) {
       case 'Subuh':
@@ -312,9 +393,6 @@ class _HomePagesState extends State<HomePages>
     }
   }
 
-  /// ===============================
-  /// SHIMMER LOADING
-  /// ===============================
   Widget _buildShimmerLoading() {
     return Shimmer.fromColors(
       baseColor: Colors.grey.shade300,
@@ -343,9 +421,6 @@ class _HomePagesState extends State<HomePages>
     );
   }
 
-  /// ===============================
-  /// ERROR STATE
-  /// ===============================
   Widget _buildErrorState(HomeState homeState) {
     return Center(
       child: Column(
@@ -367,9 +442,6 @@ class _HomePagesState extends State<HomePages>
   }
 }
 
-/// ===============================
-/// ROW WAKTU SALAT DENGAN EFEK AKTIF
-/// ===============================
 Widget _buildSalatRow(String label, String? time, {bool active = false}) {
   return AnimatedContainer(
     duration: const Duration(milliseconds: 400),
