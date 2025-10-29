@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hadist/presentation/ui/hadist_page.dart';
+import 'package:home/presentation/ui/qibla_page.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 // Feature imports
 import 'package:asmaulhusna/presentation/ui/asmaulhusna_page.dart';
@@ -18,9 +18,6 @@ import 'package:home/presentation/bloc/home/home_state.dart';
 import 'package:home/presentation/bloc/location/location_bloc.dart';
 import 'package:home/presentation/bloc/location/location_state.dart';
 
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
-
 class HomePages extends StatefulWidget {
   const HomePages({Key? key}) : super(key: key);
 
@@ -32,65 +29,16 @@ class _HomePagesState extends State<HomePages>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _selectedIndex = 0;
-  String? _lastAzanNotified;
+  String? _lastCityRequested;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _initializeNotification();
+
     _tabController.addListener(() {
       setState(() => _selectedIndex = _tabController.index);
     });
-  }
-
-  Future<void> _initializeNotification() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    const InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
-
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-  }
-
-  Future<void> _showNotificationAzan(String prayerName) async {
-    // Pilih suara sesuai nama salat
-    final String soundName =
-        prayerName.toLowerCase() == 'subuh'
-            ? 'azan_subuh' // file: assets/sounds/azan_subuh.mp3
-            : 'azan_normal'; // file: assets/sounds/azan.mp3
-
-    final AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-          'azan_channel_id',
-          'Azan Notifications',
-          channelDescription: 'Pemberitahuan waktu salat harian',
-          importance: Importance.max,
-          priority: Priority.high,
-          playSound: true,
-          sound: RawResourceAndroidNotificationSound(soundName),
-          enableVibration: true,
-          visibility: NotificationVisibility.public,
-          styleInformation: const DefaultStyleInformation(true, true),
-          category:
-              AndroidNotificationCategory
-                  .alarm, // agar bisa menembus Do Not Disturb
-        );
-
-    final NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-    );
-
-    // Gunakan ID unik untuk tiap notifikasi supaya tidak tumpang tindih
-    final int notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-
-    await flutterLocalNotificationsPlugin.show(
-      notificationId,
-      'Waktu $prayerName Telah Tiba',
-      'Sudah masuk waktu salat $prayerName, yuk segera salat 🙏',
-      platformChannelSpecifics,
-    );
   }
 
   void _showAzanDialog(BuildContext context, String prayerName) {
@@ -134,13 +82,11 @@ class _HomePagesState extends State<HomePages>
       backgroundColor: Colors.white,
       body: BlocListener<HomeBloc, HomeState>(
         listenWhen:
-            (previous, current) => previous.waktuAktif != current.waktuAktif,
+            (previous, current) =>
+                previous.showAzanDialog != current.showAzanDialog,
         listener: (context, state) {
-          if (state.waktuAktif != null &&
-              state.waktuAktif != _lastAzanNotified) {
-            _lastAzanNotified = state.waktuAktif;
-            _showAzanDialog(context, state.waktuAktif!);
-            _showNotificationAzan(state.waktuAktif!);
+          if (state.showAzanDialog != null) {
+            _showAzanDialog(context, state.showAzanDialog!);
           }
         },
         child: SafeArea(
@@ -218,12 +164,48 @@ class _HomePagesState extends State<HomePages>
 
                           const SizedBox(height: 10),
                           _buildLocationAndPrayerCard(),
-
-                          // 🔔 Tombol Tes Azan
                         ],
                       ),
                     ),
-                    Expanded(child: Image.asset('assets/quran4.png')),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Image.asset('assets/quran4.png'),
+                          const SizedBox(height: 10),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const QiblaPage(),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xff9543FF),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.explore,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              "Arah Kiblat",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
 
@@ -272,11 +254,15 @@ class _HomePagesState extends State<HomePages>
     );
   }
 
+  // ------------------------------
+  // 🔹 BAGIAN CARD LOKASI & JADWAL SALAT
+  // ------------------------------
   Widget _buildLocationAndPrayerCard() {
     return BlocListener<LocationBloc, LocationState>(
       listenWhen: (previous, current) => previous.city != current.city,
       listener: (context, state) {
-        if (state.city != null) {
+        if (state.city != null && state.city != _lastCityRequested) {
+          _lastCityRequested = state.city;
           final cityName = cleanCityName(state.city!.toUpperCase());
           context.read<HomeBloc>().add(GetIdCity(cityName));
         }
@@ -317,9 +303,11 @@ class _HomePagesState extends State<HomePages>
     );
   }
 
+  // ------------------------------
+  // 🔹 KOMPONEN UI JADWAL SALAT
+  // ------------------------------
   Widget _buildPrayerScheduleCard(HomeState homeState) {
     final activeColor = _getColorForWaktu(homeState.waktuAktif);
-
     return AnimatedContainer(
       duration: const Duration(milliseconds: 600),
       decoration: BoxDecoration(
@@ -436,8 +424,11 @@ class _HomePagesState extends State<HomePages>
           Text('Error: ${homeState.error}'),
           TextButton(
             onPressed: () {
-              if (homeState.city != null) {
-                context.read<HomeBloc>().add(GetIdCity(homeState.city!));
+              if (homeState.city != null &&
+                  homeState.city != _lastCityRequested) {
+                _lastCityRequested = homeState.city;
+                final cityName = cleanCityName(homeState.city!.toUpperCase());
+                context.read<HomeBloc>().add(GetIdCity(cityName));
               }
             },
             child: const Text("Coba Lagi"),

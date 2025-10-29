@@ -79,32 +79,6 @@ class _DetailSurahPageState extends State<DetailSurahPage> {
               ),
               child: Column(
                 children: [
-                  // Text(
-                  //   '${widget.surahEntity.namaLatin}',
-                  //   style: TextStyle(
-                  //     fontSize: 26,
-                  //     fontWeight: FontWeight.bold,
-                  //     color: Colors.white,
-                  //   ),
-                  //   // style: Theme.of(context).textTheme.headline5,
-                  // ),
-                  // Text(
-                  //   '${widget.surahEntity.arti}',
-                  //   style: TextStyle(
-                  //     fontSize: 16,
-                  //     fontWeight: FontWeight.w600,
-                  //     color: Colors.white,
-                  //   ),
-                  // ),
-                  // SizedBox(height: 8.0),
-                  // Text(
-                  //   'Jumlah ayat: ${widget.surahEntity.jumlahAyat}',
-                  //   style: TextStyle(
-                  //     fontWeight: FontWeight.w600,
-                  //     color: Colors.white,
-                  //   ),
-                  // ),
-                  // SizedBox(height: 10),
                   Text(
                     removeHtmlTags(widget.surahEntity.deskripsi ?? ''),
                     style: TextStyle(
@@ -138,11 +112,6 @@ class _DetailSurahPageState extends State<DetailSurahPage> {
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Container(
-                                      width: 40,
-                                      margin: const EdgeInsets.only(
-                                        left: 8.0,
-                                        right: 16.0,
-                                      ),
                                       padding: const EdgeInsets.all(8.0),
                                       decoration: BoxDecoration(
                                         image: DecorationImage(
@@ -156,11 +125,14 @@ class _DetailSurahPageState extends State<DetailSurahPage> {
                                         ),
                                       ),
                                       child: Center(
-                                        child: Text(
-                                          '${index + 1}',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(2),
+                                          child: Text(
+                                            '${index + 1}',
+                                            style: TextStyle(
+                                              // fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ),

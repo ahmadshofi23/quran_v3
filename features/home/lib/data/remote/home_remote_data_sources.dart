@@ -24,11 +24,15 @@ class HomeRemoteDataSourcesImpl implements HomeRemoteDataSources {
 
   @override
   Future<JadwalHarianModels> getJadwalHarian(String idKota, String date) async {
-    await Future.delayed(Duration(seconds: 2));
-    final response = await dio.get(
-      'https://api.myquran.com/v2/sholat/jadwal/$idKota/$date',
-    );
-    print('response data: ${response.data}');
-    return JadwalHarianModels.fromJson(response.data);
+    try {
+      await Future.delayed(Duration(seconds: 2));
+      final response = await dio.get(
+        'https://api.myquran.com/v2/sholat/jadwal/$idKota/$date',
+      );
+      print('response data: ${response.data}');
+      return JadwalHarianModels.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Failed to fetch Jadwal Harian: $e');
+    }
   }
 }

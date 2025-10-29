@@ -18,20 +18,20 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<GetIdCity>(_getIdCity);
     on<UpdateCurrentTime>(_onUpdateCurrentTime);
     on<ShowAzanDialog>(_onShowAzanDialog);
-    // on<TestAzan>(_onTestAzan); // ✅ Event manual test azan
 
-    // Update jam realtime setiap 1 detik
+    // Timer untuk update jam real-time
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       add(UpdateCurrentTime());
     });
   }
 
-  /// 🔹 Ambil jadwal harian berdasarkan kota
+  // =========================
+  // 🔹 Fetch Jadwal Salat
+  // =========================
   Future<void> _getIdCity(GetIdCity event, Emitter<HomeState> emit) async {
-    emit(state.copyWith(loading: true));
+    emit(state.copyWith(loading: true, error: null));
     try {
       final response = await homeUsecase.getJadwalHarian(event.city);
-
       emit(
         state.copyWith(
           city: event.city,
@@ -39,97 +39,87 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           jadwalHarian: response,
         ),
       );
-
-      // 🔔 Setelah jadwal salat didapat → jadwalkan notifikasi azan
       await _jadwalkanNotifikasiAzan(response);
     } catch (e) {
       emit(state.copyWith(error: e.toString(), loading: false));
     }
   }
 
-  /// 🔹 Update jam realtime dan countdown
+  // =========================
+  // 🔹 Update waktu aktif
+  // =========================
   void _onUpdateCurrentTime(UpdateCurrentTime event, Emitter<HomeState> emit) {
     final now = DateTime.now();
-    final waktuAktif = _tentukanWaktuSalatAktif(now, state.jadwalHarian);
-    final nextPrayerInfo = _tentukanWaktuSalatBerikutnya(
-      now,
-      state.jadwalHarian,
-    );
+    final aktif = _tentukanWaktuSalatAktif(now, state.jadwalHarian);
+    final next = _tentukanWaktuSalatBerikutnya(now, state.jadwalHarian);
 
-    // 🔔 Jika masuk waktu baru dan belum ditampilkan
-    if (waktuAktif != null && waktuAktif != _lastAzanShown) {
-      _lastAzanShown = waktuAktif;
-      add(ShowAzanDialog(waktuAktif));
-      _showNotificationAzan(waktuAktif); // tampilkan notifikasi segera
+    // Jika waktu salat baru aktif, tampilkan azan
+    if (aktif != null && aktif != _lastAzanShown) {
+      _lastAzanShown = aktif;
+      add(ShowAzanDialog(aktif));
+      _showNotificationAzan(aktif);
     }
 
     emit(
       state.copyWith(
         currentTime: now,
-        waktuAktif: waktuAktif,
-        waktuSalatBerikutnya: nextPrayerInfo['nama'],
-        countdown: nextPrayerInfo['countdown'],
+        waktuAktif: aktif,
+        waktuSalatBerikutnya: next['nama'],
+        countdown: next['countdown'],
       ),
     );
   }
 
-  /// 🔹 Event untuk menampilkan dialog azan di UI
   void _onShowAzanDialog(ShowAzanDialog event, Emitter<HomeState> emit) {
     emit(state.copyWith(showAzanDialog: event.prayerName));
   }
 
-  /// 🔹 Event untuk test azan manual
-  // Future<void> _onTestAzan(TestAzan event, Emitter<HomeState> emit) async {
-  //   await _showNotificationAzan(event.prayerName);
-  // }
+  // =========================
+  // 🔹 Notifikasi Azan
+  // =========================
+  String _getAzanSound(String prayerName) {
+    return prayerName.toLowerCase() == 'subuh' ? 'azan_subuh' : 'azan_normal';
+  }
 
-  /// 🔹 Tampilkan notifikasi azan langsung
   Future<void> _showNotificationAzan(String prayerName) async {
-    final soundFile =
-        prayerName.toLowerCase() == 'subuh'
-            ? 'azan_subuh'
-            : 'azan_normal'; // tanpa .mp3
-
-    const channelId = 'azan_channel_v2'; // ganti channel baru agar suara aktif
-
     final androidDetails = AndroidNotificationDetails(
-      channelId,
+      'azan_channel_v2',
       'Azan Notifications',
-      channelDescription: 'Pemberitahuan waktu salat',
+      channelDescription: 'Pengingat waktu salat',
       importance: Importance.max,
       priority: Priority.high,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound(soundFile),
+      sound: RawResourceAndroidNotificationSound(_getAzanSound(prayerName)),
       category: AndroidNotificationCategory.alarm,
       visibility: NotificationVisibility.public,
     );
 
-    final details = NotificationDetails(android: androidDetails);
-
     await notificationsPlugin.show(
-      0,
+      prayerName.hashCode,
       'Waktu $prayerName Telah Tiba',
       'Sudah masuk waktu salat $prayerName, yuk segera salat 🙏',
-      details,
+      NotificationDetails(android: androidDetails),
     );
   }
 
-  /// 🔹 Tentukan waktu salat aktif
+  // =========================
+  // 🔹 Hitung waktu aktif & berikutnya
+  // =========================
   String? _tentukanWaktuSalatAktif(DateTime now, JadwalHarianEntity? jadwal) {
     if (jadwal == null) return null;
 
-    DateTime parse(String waktu) {
-      final parts = waktu.split(':');
+    DateTime parse(String w) {
+      final p = w.split(':');
       return DateTime(
         now.year,
         now.month,
         now.day,
-        int.parse(parts[0]),
-        int.parse(parts[1]),
+        int.parse(p[0]),
+        int.parse(p[1]),
       );
     }
 
-    final map = {
+    final times = {
       'Imsak': parse(jadwal.imsak ?? '04:30'),
       'Subuh': parse(jadwal.subuh ?? '04:45'),
       'Dhuha': parse(jadwal.dhuha ?? '06:15'),
@@ -140,27 +130,26 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     };
 
     String? aktif;
-    for (final entry in map.entries) {
+    for (final entry in times.entries) {
       if (now.isAfter(entry.value)) aktif = entry.key;
     }
     return aktif;
   }
 
-  /// 🔹 Tentukan waktu salat berikutnya dan countdown
   Map<String, dynamic> _tentukanWaktuSalatBerikutnya(
     DateTime now,
     JadwalHarianEntity? jadwal,
   ) {
     if (jadwal == null) return {'nama': null, 'countdown': '--:--:--'};
 
-    DateTime parse(String waktu) {
-      final parts = waktu.split(':');
+    DateTime parse(String w) {
+      final p = w.split(':');
       return DateTime(
         now.year,
         now.month,
         now.day,
-        int.parse(parts[0]),
-        int.parse(parts[1]),
+        int.parse(p[0]),
+        int.parse(p[1]),
       );
     }
 
@@ -174,29 +163,24 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       {'nama': 'Isya', 'waktu': parse(jadwal.isya ?? '19:15')},
     ];
 
-    for (final item in list) {
-      if ((item['waktu'] as DateTime).isAfter(now)) {
-        final diff = (item['waktu'] as DateTime).difference(now);
-        return {'nama': item['nama'], 'countdown': _formatDuration(diff)};
+    for (final i in list) {
+      if ((i['waktu'] as DateTime).isAfter(now)) {
+        final diff = (i['waktu'] as DateTime).difference(now);
+        return {'nama': i['nama'], 'countdown': _formatDuration(diff)};
       }
     }
 
-    final besok = (list.first['waktu'] as DateTime).add(
-      const Duration(days: 1),
+    final diff = (list.first['waktu'] as DateTime).difference(
+      now.add(const Duration(days: -1)),
     );
-    final diff = besok.difference(now);
     return {'nama': list.first['nama'], 'countdown': _formatDuration(diff)};
   }
 
   String _formatDuration(Duration d) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final h = twoDigits(d.inHours);
-    final m = twoDigits(d.inMinutes.remainder(60));
-    final s = twoDigits(d.inSeconds.remainder(60));
-    return '$h:$m:$s';
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(d.inHours)}:${two(d.inMinutes.remainder(60))}:${two(d.inSeconds.remainder(60))}';
   }
 
-  /// 🔔 Jadwalkan notifikasi azan otomatis
   Future<void> _jadwalkanNotifikasiAzan(JadwalHarianEntity jadwal) async {
     final prayers = {
       'Subuh': jadwal.subuh,
@@ -205,45 +189,37 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       'Maghrib': jadwal.maghrib,
       'Isya': jadwal.isya,
     };
-
-    await notificationsPlugin.cancelAll(); // bersihkan lama
+    await notificationsPlugin.cancelAll();
 
     final now = DateTime.now();
-
-    for (final entry in prayers.entries) {
-      if (entry.value == null) continue;
-
-      final parts = entry.value!.split(':');
+    for (final e in prayers.entries) {
+      if (e.value == null) continue;
+      final p = e.value!.split(':');
       final jadwalWaktu = DateTime(
         now.year,
         now.month,
         now.day,
-        int.parse(parts[0]),
-        int.parse(parts[1]),
+        int.parse(p[0]),
+        int.parse(p[1]),
       );
-
       if (jadwalWaktu.isBefore(now)) continue;
 
-      final soundFile =
-          entry.key.toLowerCase() == 'subuh' ? 'azan_subuh' : 'azan';
-
       await notificationsPlugin.zonedSchedule(
-        entry.key.hashCode,
-        'Waktu ${entry.key}',
-        'Sudah masuk waktu ${entry.key}',
+        e.key.hashCode,
+        'Waktu ${e.key}',
+        'Sudah masuk waktu ${e.key}',
         tz.TZDateTime.from(jadwalWaktu, tz.local),
         NotificationDetails(
           android: AndroidNotificationDetails(
-            'azan_channel',
+            'azan_channel_v2',
             'Azan Notifications',
-            channelDescription: 'Notifikasi pengingat waktu salat',
+            channelDescription: 'Pengingat waktu salat',
             importance: Importance.max,
             priority: Priority.high,
             playSound: true,
-            sound: RawResourceAndroidNotificationSound(soundFile),
+            sound: RawResourceAndroidNotificationSound(_getAzanSound(e.key)),
           ),
         ),
-        // ignore: deprecated_member_use
         androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,

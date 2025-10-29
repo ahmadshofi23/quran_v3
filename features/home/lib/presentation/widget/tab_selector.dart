@@ -15,38 +15,25 @@ class TabSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        TabItem(
-          label: 'SURAT',
-          index: 0,
-          isSelected: selectedIndex == 0,
-          width: width * 0.2,
-          onTap: onTap,
-        ),
-        SizedBox(width: width * 0.05),
-        TabItem(
-          label: 'DOA',
-          index: 1,
-          isSelected: selectedIndex == 1,
-          width: width * 0.2,
-          onTap: onTap,
-        ),
-        SizedBox(width: width * 0.05),
-        TabItem(
-          label: 'Asmaul Husna',
-          index: 2,
-          isSelected: selectedIndex == 2,
-          onTap: onTap,
-        ),
-        SizedBox(width: width * 0.05),
-        TabItem(
-          label: 'Hadist',
-          index: 3,
-          isSelected: selectedIndex == 3,
-          onTap: onTap,
-        ),
-      ],
+    // Daftar tab bisa kamu ubah dengan mudah di sini
+    final List<String> tabs = ['SURAT', 'DOA', 'Asmaul Husna', 'Hadist'];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: List.generate(tabs.length, (index) {
+          return Padding(
+            padding: EdgeInsets.only(right: width * 0.05),
+            child: TabItem(
+              label: tabs[index],
+              index: index,
+              isSelected: selectedIndex == index,
+              width: width * 0.25, // bisa disesuaikan
+              onTap: onTap,
+            ),
+          );
+        }),
+      ),
     );
   }
 }

@@ -1,55 +1,41 @@
-// ignore: file_names
 import 'package:flutter/material.dart';
-// ignore: depend_on_referenced_packages
 import 'package:flutter_modular/flutter_modular.dart';
-import 'package:quran_v3/app/quran_app.dart';
-// ignore: depend_on_referenced_packages
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-// ignore: depend_on_referenced_packages
 import 'package:timezone/data/latest.dart' as tz;
 import 'dart:io' show Platform;
+import 'package:quran_v3/app/quran_app.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   tz.initializeTimeZones();
 
-  const AndroidInitializationSettings androidInitSettings =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
-
-  const InitializationSettings initSettings = InitializationSettings(
-    android: androidInitSettings,
-  );
-
+  const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const initSettings = InitializationSettings(android: androidInit);
   await flutterLocalNotificationsPlugin.initialize(initSettings);
 
-  const AndroidNotificationChannel azanChannel = AndroidNotificationChannel(
+  const channel = AndroidNotificationChannel(
     'azan_channel_v2',
     'Azan Notifications',
-    description: 'Notifikasi pengingat waktu salat',
+    description: 'Pengingat waktu salat harian',
     importance: Importance.max,
     playSound: true,
     sound: RawResourceAndroidNotificationSound('azan_normal'),
   );
 
-  await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin
-      >()
-      ?.createNotificationChannel(azanChannel);
+  final androidImpl =
+      flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+
+  await androidImpl?.createNotificationChannel(channel);
 
   if (Platform.isAndroid) {
-    final androidImplementation =
-        flutterLocalNotificationsPlugin
-            .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin
-            >();
-    await androidImplementation?.requestNotificationsPermission();
+    await androidImpl?.requestNotificationsPermission();
   }
 
-  // ✅ Jalankan aplikasi Modular
   runApp(ModularApp(module: AppModule(), child: const QuranApp()));
 }

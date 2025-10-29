@@ -23,7 +23,7 @@ class HomeRepositoriesImpl extends HomeRepository {
   Future<JadwalHarianEntity> getJadwalHarian(String city) async {
     final date = DateTime.now();
     final formatteDate = DateFormat('yyyy-MM-dd').format(date);
-    print('date: $date');
+    print('date: $formatteDate');
     final idKota = await getIdCity(city);
     final response = await remoteDataSources.getJadwalHarian(
       idKota,
