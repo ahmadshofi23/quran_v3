@@ -23,4 +23,26 @@ class AyatEntity {
     tr: tr ?? this.tr,
     idn: idn ?? this.idn,
   );
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'surah_number': surah,
+      'nomor': nomor,
+      'ar': ar,
+      'tr': tr,
+      'idn': idn,
+    };
+  }
+
+  factory AyatEntity.fromMap(Map<String, dynamic> map) {
+    return AyatEntity(
+      id: map['id'] as int?,
+      surah: map['surah_number'] as int?,
+      nomor: map['nomor'] as int?,
+      ar: map['ar'] as String?,
+      tr: map['tr'] as String?,
+      idn: map['idn'] as String?,
+    );
+  }
 }

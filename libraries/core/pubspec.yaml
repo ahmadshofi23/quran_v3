@@ -1,6 +1,5 @@
 publish_to: none
-
-name: surah
+name: core
 description: "A new Flutter package project."
 version: 0.0.1
 homepage:
@@ -14,11 +13,7 @@ dependencies:
     sdk: flutter
 
   dependencies:
-    path: ../../libraries/dependencies
-  shared:
-    path: ../../libraries/shared
-  core:
-    path: ../../libraries/core
+    path: ../dependencies
 
 dev_dependencies:
   flutter_test:

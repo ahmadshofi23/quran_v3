@@ -45,6 +45,8 @@ dependencies:
     path: features/surah
   hadist:
     path: features/hadist
+  core:
+    path: libraries/core
 
 dev_dependencies:
   flutter_lints: ^5.0.0

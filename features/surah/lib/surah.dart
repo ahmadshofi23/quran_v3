@@ -1,5 +1,7 @@
+import 'package:core/database_helper.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:shared/common/utils/named_routes.dart';
+import 'package:surah/data/remote/local_quran_data_sources.dart';
 import 'package:surah/data/remote/remote_quran.dart';
 import 'package:surah/data/repositories/quran_repository_impl.dart';
 import 'package:surah/domain/repositories/quran_repository.dart';
@@ -16,23 +18,6 @@ class FeatureSurahModule extends Module {
 
   final _namedRoutes = Modular.get<NamedRoutes>();
 
-  // @override
-  // void binds(i) {
-  //   i.addSingleton<RemoteQuranDataSourceImpl>(
-  //     () => RemoteQuranDataSourceImpl(
-  //       // dio: Modular.get<Dio>(),
-  //     ),
-  //   );
-  //   i.addSingleton<QuranRepositoryImpl>(
-  //     () => QuranRepositoryImpl(
-  //       remoteQuranDataSource: Modular.get<RemoteQuranDataSource>(),
-  //     ),
-  //   );
-  //   i.addSingleton<QuranUseCaseImpl>(
-  //     () => QuranUseCaseImpl(quranRepository: Modular.get<QuranRepository>()),
-  //   );
-  // }
-
   @override
   List<Bind> get binds => [
     Bind(
@@ -41,29 +26,20 @@ class FeatureSurahModule extends Module {
       ),
     ),
     Bind(
+      (_) => LocalQuranDataSourcesImpl(
+        databaseHelper: Modular.get<DatabaseHelper>(),
+      ),
+    ),
+    Bind(
       (_) => QuranRepositoryImpl(
         remoteQuranDataSource: Modular.get<RemoteQuranDataSource>(),
+        localQuranDataSources: Modular.get<LocalQuranDataSources>(),
       ),
     ),
     Bind(
       (_) => QuranUseCaseImpl(quranRepository: Modular.get<QuranRepository>()),
     ),
   ];
-
-  // @override
-  // void routes(r) {
-  //   r.child(Modular.initialRoute, child: (context) => SplashPages());
-
-  //   r.child(
-  //     Modular.get<NamedRoutes>().home,
-  //     child:
-  //         (context) => BlocProvider(
-  //           create:
-  //               (context) => QuranBloc(useCase: Modular.get<QuranUseCase>()),
-  //           child: HomePages(),
-  //         ),
-  //   );
-  // }
 
   @override
   List<ModularRoute> get routes => [

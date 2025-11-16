@@ -1,3 +1,5 @@
+import 'package:core/database_helper.dart';
+import 'package:doa/data/remote/local_doa_data_sources.dart';
 import 'package:doa/data/remote/remote_doa_data_sources.dart';
 import 'package:doa/data/repositories/doa_repository.dart';
 import 'package:doa/domain/repositories_impl/doa_repository_impl.dart';
@@ -23,8 +25,13 @@ class FeatureDoaModule extends Module {
       // dio: Modular.get<Dio>(),
     ),
     Bind(
+      (_) =>
+          LocalDoaDataSourceImpl(databaseHelper: Modular.get<DatabaseHelper>()),
+    ),
+    Bind(
       (_) => DoaRepositoryImpl(
         remoteDoaDataSources: Modular.get<RemoteDoaDataSources>(),
+        localDoaDataSources: Modular.get<LocalDoaDataSources>(),
       ),
     ),
 

@@ -1,4 +1,5 @@
 import 'package:asmaulhusna/asmaulhusna.dart';
+import 'package:core/database_module.dart';
 import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_modular/flutter_modular.dart';
@@ -12,7 +13,7 @@ import 'package:hadist/hadist.dart';
 
 class AppModule extends Module {
   @override
-  List<Module> get imports => [SharedModule()];
+  List<Module> get imports => [SharedModule(), DatabaseModule()];
 
   // void exportBinds(i) {
   //   i.addSingleton<NamedRoutes>(() => NamedRoutes(), export: true);

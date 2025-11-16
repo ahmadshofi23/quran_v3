@@ -57,6 +57,7 @@ class _QiblaPageState extends State<QiblaPage>
           ),
         );
       }
+      await Geolocator.openAppSettings();
       return;
     }
 

@@ -1,4 +1,6 @@
+import 'package:core/database_helper.dart';
 import 'package:flutter_modular/flutter_modular.dart';
+import 'package:hadist/data/remote/local_hadist_data_source.dart';
 import 'package:hadist/data/remote/remote_hadist_data_sources.dart';
 import 'package:hadist/data/repositories/hadist_repository.dart';
 import 'package:hadist/domain/repositories_impl/hadist_repository_impl.dart';
@@ -21,8 +23,14 @@ class FeatureHadistModule extends Module {
       // dio: Modular.get<Dio>(),
     ),
     Bind(
+      (_) => LocalHadistDataSourceImpl(
+        databaseHelper: Modular.get<DatabaseHelper>(),
+      ),
+    ),
+    Bind(
       (_) => HadistRepositoryImpl(
         remoteHadistDataSources: Modular.get<RemoteHadistDataSources>(),
+        localHadistDataSource: Modular.get<LocalHadistDataSource>(),
       ),
     ),
 

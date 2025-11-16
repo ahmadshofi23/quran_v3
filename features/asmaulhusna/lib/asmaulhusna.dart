@@ -1,9 +1,11 @@
+import 'package:asmaulhusna/data/remote/local_asmaulhusana_data_source.dart';
 import 'package:asmaulhusna/data/remote/remote_asmaulhusna_data_sources.dart';
 import 'package:asmaulhusna/data/repositories/asmaulhusna_repository.dart';
 import 'package:asmaulhusna/domain/repositories_impl/asmaulhusna_repositories_impl.dart';
 import 'package:asmaulhusna/domain/usecase/asmaulhusna_usecase.dart';
 import 'package:asmaulhusna/presentation/bloc/bloc/asmaul_husna_bloc.dart';
 import 'package:asmaulhusna/presentation/ui/asmaulhusna_page.dart';
+import 'package:core/database_helper.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:shared/common/utils/named_routes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,9 +22,15 @@ class FeatureAsmaulHusnaModule extends Module {
       // dio: Modular.get<Dio>(),
     ),
     Bind(
+      (_) => LocalAsmaulhusanaDataSourceImpl(
+        databaseHelper: Modular.get<DatabaseHelper>(),
+      ),
+    ),
+    Bind(
       (_) => AsmaulhusnaRepositoriesImpl(
         remoteAsmaulHusnaDataSources:
             Modular.get<RemoteAsmaulHusnaDataSources>(),
+        localAsmaulHusnaDataSource: Modular.get<LocalAsmaulHusnaDataSource>(),
       ),
     ),
 

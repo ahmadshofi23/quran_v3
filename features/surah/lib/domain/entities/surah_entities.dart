@@ -7,6 +7,7 @@ class SurahEntity {
   final String? arti;
   final String? deskripsi;
   final String? audio;
+
   SurahEntity({
     this.nomor,
     this.nama,
@@ -37,4 +38,30 @@ class SurahEntity {
     deskripsi: deskripsi ?? this.deskripsi,
     audio: audio ?? this.audio,
   );
+
+  Map<String, dynamic> toMap() {
+    return {
+      'nomor': nomor,
+      'nama': nama,
+      'nama_latin': namaLatin,
+      'jumlah_ayat': jumlahAyat,
+      'tempat_turun': tempatTurun,
+      'arti': arti,
+      'deskripsi': deskripsi,
+      'audio': audio,
+    };
+  }
+
+  factory SurahEntity.fromMap(Map<String, dynamic> map) {
+    return SurahEntity(
+      nomor: map['nomor'] as int?,
+      nama: map['nama'] as String?,
+      namaLatin: map['nama_latin'] as String?,
+      jumlahAyat: map['jumlah_ayat'] as int?,
+      tempatTurun: map['tempat_turun'] as String?,
+      arti: map['arti'] as String?,
+      deskripsi: map['deskripsi'] as String?,
+      audio: map['audio'] as String?,
+    );
+  }
 }
