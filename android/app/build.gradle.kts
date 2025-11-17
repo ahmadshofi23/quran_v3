@@ -15,7 +15,7 @@ if (keystoreFile.exists()) {
 
 android {
     namespace = "com.example.quran_v3"
-    compileSdk = 35
+    compileSdk = 36
 
     signingConfigs {
         create("release") {
@@ -29,7 +29,7 @@ android {
     defaultConfig {
         applicationId = "com.example.quran_v3"
         minSdk = 21
-        targetSdk = 35
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -38,6 +38,12 @@ android {
         release {
             signingConfig = signingConfigs.getByName("release")
         }
+    }
+
+    compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
