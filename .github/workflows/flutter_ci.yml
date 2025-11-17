@@ -22,11 +22,22 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/app-key.jks
+
+      - name: Create key.properties
+        run: |
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=app-key.jks" >> android/key.properties
+
       - name: Run Flutter analyze (no fail)
         run: flutter analyze || true
 
       - name: Run unit tests
-        run: echo "Skip unit test"
+        run: echo "Skipping tests"
 
       - name: Build APK
         run: flutter build apk --release -t lib/launcher/main-dev.dart
